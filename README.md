@@ -1,7 +1,4 @@
-
-Wojciech Pałka 300869 gr. 4
-
-# Server Panel
+# File manager
 
 Panel do zarządzania plikami serwera, zarządzania użytkownikami oraz monitorowania zużycia zasobów.
 
@@ -30,7 +27,3 @@ git clone https://github.com/wpalkaa/Server-Panel
 ```bash
 docker compose up -d
 ```
-
-### 3. Obrazy aplikacyjne
-backend : docker.io/wojdeg13/server-panel-backend:v1.0.0
-frontend: docker.io/wojdeg13/server-panel-front:v1.0.0
