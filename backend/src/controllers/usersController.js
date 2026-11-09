@@ -1,4 +1,3 @@
-
 const SECRET_KEY = process.env.SECRET_KEY;
 const { isNameValid } = require('../utils/files');
 
@@ -10,7 +9,6 @@ exports.getUsers = async (req, res) => {
     console.log(`[Info]: Get users list request received${search ? ` with params: ${search}` : ''}.`);
     
     try {
-
         const filter = {};
 
         if(search) {
@@ -55,7 +53,7 @@ exports.getUserData = async (req, res) => {
             message: error.message || "server"
         });        
     }
-}
+};
 
 exports.deleteUser = async (req, res) => {
     const { id } = req.params;
@@ -85,13 +83,12 @@ exports.createUser = async (req, res) => {
     console.log(`[Info]: Register request received for:`, login);
 
     try {
-        const loginLength = login.length;
+        const loginLength = login ? login.length : 0;
         if( loginLength < 3 || loginLength > 20 || !isNameValid(login) ) throw { status: 400, message: "invalidLogin" };
 
         const existingUser = await User.findOne({ login });
         if(existingUser) throw { status: 409, message: "userExists" };
 
-        
         const hashedPassword = await bcrypt.hash(password, 10);
         
         const newUser = await User.create({
@@ -107,10 +104,74 @@ exports.createUser = async (req, res) => {
         });
     } catch(error) {
         if(error.status) console.log(`[Info]: Couldn't create user: ${error.message}`);
-        else console.log(`[Error]: Server error on register request:\n`, error)
+        else console.log(`[Error]: Server error on register request:\n`, error);
         res.status( error.status || 500 ).json({
             success: false,
             message: error.message || 'server'
         });
     }
-}
+};
+
+exports.updateUser = async (req, res) => {
+    const { id } = req.params;
+    const { login, password, group, avatar } = req.body || {};
+    console.log(`[Info]: Update user request received for user id: ${id}`);
+
+    try {
+        let user = null;
+        try {
+            user = await User.findById(id);
+        } catch (e) {}
+        if (!user) {
+            user = await User.findOne({ login: id });
+        }
+        if (!user) throw { status: 404, message: "userNotFound" };
+
+        if (login && login !== user.login) {
+            if (login.length < 3 || login.length > 20 || !isNameValid(login)) {
+                throw { status: 400, message: "invalidLogin" };
+            }
+            const exists = await User.findOne({ login });
+            if (exists) throw { status: 409, message: "userExists" };
+            user.login = login;
+        }
+
+        if (password) {
+            if (password.length < 3 || password.length > 64) {
+                throw { status: 400, message: "invalidPassword" };
+            }
+            user.password = await bcrypt.hash(password, 10);
+        }
+
+        if (group && ['user', 'admin'].includes(group)) {
+            if (user.group === 'admin' && group === 'user') {
+                const adminCount = await User.countDocuments({ group: 'admin' });
+                if (adminCount <= 1) {
+                    throw { status: 400, message: "cannotDemoteLastAdmin" };
+                }
+            }
+            user.group = group;
+        }
+
+        if (typeof avatar === 'string') {
+            user.avatar = avatar;
+        }
+
+        await user.save();
+        const sanitized = user.toObject ? user.toObject() : { ...user };
+        delete sanitized.password;
+
+        console.log(`[Info]: Request approved. User ${id} updated.`);
+        return res.status(200).json({
+            success: true,
+            data: sanitized
+        });
+    } catch (error) {
+        if (error.status) console.log(`[Info]: Couldn't update user: ${error.message}`);
+        else console.log(`[Error]: Server error on update user request: ${error}`);
+        return res.status(error.status || 500).json({
+            success: false,
+            message: error.message || "server"
+        });
+    }
+};

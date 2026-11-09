@@ -4,6 +4,7 @@
         "files": "Pliki",
         "resources": "Zasoby",
         "settings": "Ustawienia",
+        "logout": "Wyloguj",
         "logoutMessage": "Czy chcesz się wylogować?"
     },
     "loginPage": {
@@ -21,7 +22,9 @@
     },
     "files": {
         "title": "Lista plików",
+        "loading": "Ładowanie...",
         "actionItems": {
+            "open": "Otwórz",
             "sort": "Sortuj",
             "newFile": "Nowy plik",
             "newDir": "Nowy folder",
@@ -61,7 +64,23 @@
                 "warning": "Ta operacja jest nieodwracalna",
                 "deleteButton": "Usuń",
                 "cancelButton": "Anuluj"
+            },
+            "imagePreview": {
+                "zoomOut": "Pomniejsz",
+                "zoomIn": "Powiększ",
+                "zoomReset": "Reset",
+                "download": "Pobierz",
+                "loadError": "Nie udało się załadować podglądu obrazu."
             }
+        },
+        "editor": {
+            "unsavedChanges": "(niezapisane zmiany)",
+            "unsavedWarning": "Masz niezapisane zmiany. Czy na pewno chcesz zamknąć?",
+            "closeButton": "Zamknij",
+            "saveButton": "Zapisz (Ctrl+S)",
+            "savedMessage": "Zapisano",
+            "loadError": "Błąd podczas pobierania zawartości pliku",
+            "saveError": "Błąd podczas zapisywania pliku"
         },
         "toolBar": {
             "sort": {
@@ -95,6 +114,7 @@
             "setAdmin": "Ustaw jako administratora",
             "unsetAdmin": "Usuń uprawnienia administratora",
             "searchBarPlaceholder": "Szukaj użytkownika...",
+            "notFound": "Nie znaleziono użytkownika",
             
             "info": {
                 "previousPage": "Powrót",
@@ -117,6 +137,11 @@
                     "admin": "Administrator",
                     "user": "Użytkownik"
                 }
+            },
+            "editUser": {
+                "saveButton": "Zapisz",
+                "loadingPlaceholder": "Zapisywanie...",
+                "optional": "Opcjonalnie"
             }
         }
     },
@@ -126,8 +151,11 @@
                 "cpu": "Wykorzystanie CPU",
                 "memory": "Wykorzystanie pamięci RAM",
                 "disk": "Wykorzystanie dysku"
+            },
+            "tooltip": {
+                "time": "Godzina: ",
+                "usage": "Wykorzystanie: "
             }
-            
         }
     },
     "global": {
@@ -140,7 +168,7 @@
     "errors": {
         "generic": "Wystąpił błąd. Spróbuj ponownie później.",
         "server": "Błąd serwera. Spróbuj ponownie później.",
-        "illegalSymbols": "Użyto niedozwolonego znaku jak: \\,/,:,*,?,<,>,|",
+        "illegalSymbols": "Użyto niedozwolonego znaku jak: \\,/,:,*,?,<,>|",
         "emptyString": "Nazwa nie może być pusta",
         "fileExists": "Plik o takiej nazwie już istnieje",
         "directoryExists": "Katalog o takiej nazwie już istnieje",

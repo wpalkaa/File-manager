@@ -202,4 +202,55 @@ describe('/api/users', () => {
             expect(res.body.message).toBe('server');
         });
     });
-})
+
+    describe('PATCH /api/users/:id', () => {
+        afterEach(() => jest.clearAllMocks());
+        beforeEach(() => {
+            verifyAdmin.mockImplementation((req, res, next) => next());
+        });
+
+        it('Everything ok', async () => {
+            const fakeUser = {
+                login: 'olduser',
+                save: jest.fn().mockResolvedValue(),
+                toObject: jest.fn().mockReturnValue({ _id: '123', login: 'updateduser' })
+            };
+            User.findById.mockResolvedValue(fakeUser);
+            User.findOne.mockResolvedValue(null);
+            isNameValid.mockReturnValue(true);
+            bcrypt.hash.mockResolvedValue('hashed');
+
+            const res = await request(app).patch('/api/users/123').send({
+                login: 'updateduser'
+            });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.data.login).toBe('updateduser');
+        });
+
+        it('User not found', async () => {
+            User.findById.mockResolvedValue(null);
+
+            const res = await request(app).patch('/api/users/999').send({
+                login: 'test'
+            });
+
+            expect(res.statusCode).toBe(404);
+            expect(res.body.message).toBe('userNotFound');
+        });
+
+        it('Unauthorized when not admin', async () => {
+            verifyAdmin.mockImplementationOnce((req, res, next) => {
+                return res.status(403).json({ success: false, message: 'Unauthorized' });
+            });
+
+            const res = await request(app).patch('/api/users/123').send({
+                login: 'test'
+            });
+
+            expect(res.statusCode).toBe(403);
+            expect(res.body.message).toBe('Unauthorized');
+        });
+    });
+});

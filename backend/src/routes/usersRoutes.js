@@ -9,6 +9,10 @@ router.get('/:login', usersController.getUserData);
 router.delete('/delete/:id', verifyAdmin, usersController.deleteUser);
 router.delete('/delete/noauth/:id', usersController.deleteUser);
 
-router.post('/create', usersController.createUser);
+router.patch('/:id', verifyAdmin, usersController.updateUser);
+router.patch('/edit/:id', verifyAdmin, usersController.updateUser);
+
+router.post('/create', verifyAdmin, usersController.createUser);
+
 
 module.exports = router;

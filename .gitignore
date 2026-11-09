@@ -6,6 +6,8 @@
 # !.env.secret.frontend.example
 # !.env.secret.backend.example
 
+.agents/
+
 # MongoDB
 backend/
 mongod.lock

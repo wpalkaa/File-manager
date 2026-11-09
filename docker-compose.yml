@@ -80,7 +80,7 @@ services:
       redis:
         condition: service_healthy
       mongodb:
-        condition: service_started
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -131,6 +131,12 @@ services:
       - ./backend/data:/data/db
     networks:
       - db-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     deploy:
       resources:
         limits:

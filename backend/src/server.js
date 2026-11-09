@@ -50,8 +50,11 @@ app.use( '/api/auth', authRoutes );
 app.use( '/api/files', fileRoutes );
 app.use( '/api/users', usersRoutes)
 
-app.get('/api/health', (req, res) => {
-    res.status(200).send("OK");
+app.get('/api/health', (_req, res) => {
+    if (mongoose.connection.readyState === 1) {
+        return res.status(200).send("OK");
+    }
+    return res.status(503).send("Database not ready");
 });
 // // WebSocket
 // socket( io );
@@ -61,34 +64,49 @@ MQTTConnect();
 
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI)
-    .then( async () => {
-        console.log('[Info]: Connected to database.') 
-        
-        const adminExists = await User.findOne({ login: 'admin' });
-        const userExists = await User.findOne({ login: 'user' });
+async function connectToDatabase(retries = 15, delay = 3000) {
+    while (retries > 0) {
+        try {
+            await mongoose.connect(process.env.MONGODB_URI);
+            console.log('[Info]: Connected to database.');
 
-        if(!adminExists) {
-            console.log(`[Info]: Admin not found in database. Creating admin account.`)
-            const hashedPassword = await bcrypt.hash('admin', 10);
+            const adminExists = await User.findOne({ login: 'admin' });
+            const userExists = await User.findOne({ login: 'user' });
 
-            await User.create({
-                login: 'admin',
-                password: hashedPassword,
-                group: 'admin'
-            });
+            if (!adminExists) {
+                console.log(`[Info]: Admin not found in database. Creating admin account.`);
+                const hashedPassword = await bcrypt.hash('admin', 10);
+
+                await User.create({
+                    login: 'admin',
+                    password: hashedPassword,
+                    group: 'admin'
+                });
+            }
+            if (!userExists) {
+                console.log(`[Info]: User not found in database. Creating user account.`);
+                const hashedPassword = await bcrypt.hash('user', 10);
+
+                await User.create({
+                    login: 'user',
+                    password: hashedPassword,
+                    group: 'user'
+                });
+            }
+            return;
+        } catch (err) {
+            retries -= 1;
+            console.log(`[Error]: Couldn't connect to database (retrying in ${delay / 1000}s, retries left: ${retries}): \n${err}`);
+            if (retries === 0) {
+                console.error('[Error]: Exhausted database connection retries.');
+                break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, delay));
         }
-        if(!userExists) {
-            console.log(`[Info]: User not found in database. Creating user account.`)
-            const hashedPassword = await bcrypt.hash('user', 10);
+    }
+}
 
-            await User.create({
-                login: 'user',
-                password: hashedPassword,
-                group: 'user'
-            });
-        }})
-    .catch( (err) => console.log(`[Error]: Couldn't connect to database: \n${err}`) );
+connectToDatabase();
 
     
 // Graceful Shutdown

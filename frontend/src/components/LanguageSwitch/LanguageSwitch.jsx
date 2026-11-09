@@ -1,3 +1,4 @@
+'use client';
 
 import { useTranslation } from "@/context/LanguageProvider";
 import { useState, useRef, useEffect } from "react";

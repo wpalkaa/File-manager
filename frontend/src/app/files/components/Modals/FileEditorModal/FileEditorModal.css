@@ -1,0 +1,130 @@
+.file-editor-modal {
+    width: 80vw;
+    max-width: 900px;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.file-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #333;
+    padding-bottom: 0.5rem;
+}
+
+.file-editor-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.file-editor-header-icon {
+    color: #38bdf8;
+}
+
+.file-editor-header-title {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #f1f5f9;
+}
+
+.file-editor-unsaved-badge {
+    color: #f59e0b;
+    font-size: 0.85rem;
+}
+
+.file-editor-close-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.file-editor-body {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.file-editor-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.file-editor-textarea {
+    flex: 1;
+    width: 100%;
+    background-color: #0f172a;
+    color: #e2e8f0;
+    font-family: monospace;
+    font-size: 0.95rem;
+    padding: 0.75rem;
+    border: 1px solid #334155;
+    border-radius: 0.375rem;
+    resize: none;
+    outline: none;
+}
+
+.file-editor-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #333;
+}
+
+.file-editor-status {
+    color: #10b981;
+    font-size: 0.9rem;
+}
+
+.file-editor-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.file-editor-btn-cancel {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    border: 1px solid #475569;
+    background: #1e293b;
+    color: #cbd5e1;
+    cursor: pointer;
+}
+
+.file-editor-btn-save {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.375rem;
+    border: none;
+    color: #0f172a;
+    font-weight: bold;
+}
+
+.file-editor-btn-save.dirty {
+    background: #38bdf8;
+    cursor: pointer;
+}
+
+.file-editor-btn-save.clean {
+    background: #475569;
+    cursor: not-allowed;
+}
+
+.file-editor-error {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ef4444;
+}
