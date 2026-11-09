@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
-const SECRET_KEY = process.env.SECRET_KEY;
+const secrets = require('../../config/secrets');
+const SECRET_KEY = secrets.jwtSecret;
 
 const verifyAdmin = (req, res, next) => {
     console.log(`[Info]: Verify admin request received.`);

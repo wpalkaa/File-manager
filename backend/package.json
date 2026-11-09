@@ -21,7 +21,9 @@
     "jest-cucumber": "^4.5.0"
   },
   "scripts": {
-    "test": "jest",
-    "cov": "jest --coverage"
+    "test": "jest --testPathIgnorePatterns=tests/perf",
+    "test:all": "jest",
+    "test:perf": "jest tests/perf",
+    "cov": "jest --coverage --testPathIgnorePatterns=tests/perf"
   }
 }
