@@ -13,7 +13,8 @@ jest.mock('fs', () => ({ // tworzy obiekt fs
         rename: jest.fn(),
         rm: jest.fn(),
         mkdir: jest.fn(),
-        writeFile: jest.fn()
+        writeFile: jest.fn(),
+        readFile: jest.fn()
     }
 }));
 
@@ -42,6 +43,8 @@ describe('Files controller', () => {
         json: jest.fn(),
         download: jest.fn(),
         attachment: jest.fn(),
+        setHeader: jest.fn(),
+        sendFile: jest.fn(),
         };
     });
 
@@ -96,10 +99,10 @@ describe('Files controller', () => {
 
             await fileController.listFiles(req, res);
 
-            expect(res.status).toHaveBeenCalledWith(500); //trzeba by kiedys poprawic
+            expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
                 success: false,
-                message: 'Not directory'
+                message: 'notADirectory'
             }));
         });
     });
@@ -501,5 +504,110 @@ describe('Files controller', () => {
             }));
         });
     });
+
+    describe('getRawFile', () => {
+        it('Everything ok - image file', async () => {
+            req.query = { path: '/image.png' };
+            getTargetPath.mockResolvedValue('/home/image.png');
+            fs.promises.stat.mockResolvedValue({
+                isDirectory: () => false,
+            });
+
+            await fileController.getRawFile(req, res);
+
+            expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'image/png');
+            expect(res.sendFile).toHaveBeenCalled();
+        });
+
+        it('Target is directory', async () => {
+            req.query = { path: '/photos' };
+            getTargetPath.mockResolvedValue('/home/photos');
+            fs.promises.stat.mockResolvedValue({
+                isDirectory: () => true,
+            });
+
+            await fileController.getRawFile(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: false,
+                message: 'notAFile'
+            }));
+        });
+    });
+
+    describe('getFileContent', () => {
+        it('Everything ok - text file', async () => {
+            req.query = { path: '/notes.txt' };
+            getTargetPath.mockResolvedValue('/home/notes.txt');
+            fs.promises.stat.mockResolvedValue({
+                isDirectory: () => false,
+                size: 100,
+                mtime: new Date()
+            });
+            fs.promises.readFile.mockResolvedValue('Hello World');
+
+            await fileController.getFileContent(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: true,
+                content: 'Hello World'
+            }));
+        });
+
+        it('File too large', async () => {
+            req.query = { path: '/huge.txt' };
+            getTargetPath.mockResolvedValue('/home/huge.txt');
+            fs.promises.stat.mockResolvedValue({
+                isDirectory: () => false,
+                size: 10 * 1024 * 1024,
+                mtime: new Date()
+            });
+
+            await fileController.getFileContent(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: false,
+                message: 'fileTooLarge'
+            }));
+        });
+    });
+
+    describe('saveFileContent', () => {
+        it('Everything ok', async () => {
+            req.body = { path: '/notes.txt', content: 'Updated' };
+            getTargetPath.mockResolvedValue('/home/notes.txt');
+            fs.promises.stat.mockResolvedValue({
+                isDirectory: () => false
+            });
+            fs.promises.writeFile.mockResolvedValue();
+            fs.promises.rename.mockResolvedValue();
+
+            await fileController.saveFileContent(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: true,
+                message: 'File content saved'
+            }));
+        });
+
+        it('Cannot save to directory', async () => {
+            req.body = { path: '/folder', content: 'Updated' };
+            getTargetPath.mockResolvedValue('/home/folder');
+            fs.promises.stat.mockResolvedValue({
+                isDirectory: () => true
+            });
+
+            await fileController.saveFileContent(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: false,
+                message: 'notAFile'
+            }));
+        });
+    });
 });
-    

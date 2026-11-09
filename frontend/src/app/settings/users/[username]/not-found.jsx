@@ -1,6 +1,13 @@
+'use client';
 
-export default function notFoundUser() {
+import { useTranslation } from '@/context/LanguageProvider';
+
+export default function NotFoundUser() {
+    const { lang } = useTranslation();
+
     return (
-        <div>Nie znaleziono usera</div>
-    )
+        <div style={{ color: '#ef4444', padding: '2rem', textAlign: 'center', fontSize: '1.25rem' }}>
+            {lang?.settings?.users?.notFound || 'Nie znaleziono użytkownika'}
+        </div>
+    );
 }

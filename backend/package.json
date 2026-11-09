@@ -9,6 +9,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.5",
     "mqtt": "^5.15.0",
+    "redis": "^5.12.1",
     "socket.io": "^4.8.1",
     "socketio": "^1.0.0",
     "supertest": "^7.2.2",
@@ -20,7 +21,9 @@
     "jest-cucumber": "^4.5.0"
   },
   "scripts": {
-    "test": "jest",
-    "cov": "jest --coverage"
+    "test": "jest --testPathIgnorePatterns=tests/perf",
+    "test:all": "jest",
+    "test:perf": "jest tests/perf",
+    "cov": "jest --coverage --testPathIgnorePatterns=tests/perf"
   }
 }

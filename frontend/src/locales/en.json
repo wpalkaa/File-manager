@@ -4,6 +4,7 @@
         "files": "Files",
         "resources": "Resources",
         "settings": "Settings",
+        "logout": "Log out",
         "logoutMessage": "Are you sure you want to log out?"
     },
     "loginPage": {
@@ -21,7 +22,9 @@
     },
     "files": {
         "title": "Files list",
+        "loading": "Loading...",
         "actionItems": {
+            "open": "Open",
             "sort": "Sort",
             "newFile": "New file",
             "newDir": "New folder",
@@ -61,7 +64,23 @@
                 "warning": "This action is irreversible",
                 "deleteButton": "Delete",
                 "cancelButton": "Cancel"
+            },
+            "imagePreview": {
+                "zoomOut": "Zoom out",
+                "zoomIn": "Zoom in",
+                "zoomReset": "Reset zoom",
+                "download": "Download",
+                "loadError": "Failed to load image preview."
             }
+        },
+        "editor": {
+            "unsavedChanges": "(unsaved changes)",
+            "unsavedWarning": "You have unsaved changes. Are you sure you want to close?",
+            "closeButton": "Close",
+            "saveButton": "Save (Ctrl+S)",
+            "savedMessage": "Saved",
+            "loadError": "Error loading file content",
+            "saveError": "Error saving file"
         },
         "toolBar": {
             "sort": {
@@ -95,11 +114,12 @@
             "setAdmin": "Set as administrator",
             "unsetAdmin": "Remove administrator privileges",
             "searchBarPlaceholder": "Find user...",
+            "notFound": "User not found",
             
             "info": {
                 "previousPage": "Back",
                 "editUser": "Edit user",
-                "deleteUser": "Delete user  "
+                "deleteUser": "Delete user"
             },
 
             "createUser": {
@@ -117,6 +137,11 @@
                     "admin": "Admin",
                     "user": "User"
                 }
+            },
+            "editUser": {
+                "saveButton": "Save",
+                "loadingPlaceholder": "Saving...",
+                "optional": "Optional"
             }
         }
     },
@@ -126,8 +151,11 @@
                 "cpu": "CPU usage",
                 "memory": "RAM usage",
                 "disk": "Disk usage"
+            },
+            "tooltip": {
+                "time": "Time: ",
+                "usage": "Usage: "
             }
-            
         }
     },
     "global": {
@@ -140,7 +168,7 @@
     "errors": {
         "generic": "An error occurred. Please try again later.",
         "server": "Server error. Please try again later.",
-        "illegalSymbols": "The name contains illegal characters like: \\,/,:,*,?,<,>,|",
+        "illegalSymbols": "The name contains illegal characters like: \\,/,:,*,?,<,>|",
         "emptyString": "The name cannot be empty",
         "fileExists": "A file with this name already exists",
         "directoryExists": "A directory with this name already exists",

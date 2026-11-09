@@ -1,10 +1,12 @@
 const jwt = require('jsonwebtoken');
-
-const { isNameValid } = require('../utils/files');
-const SECRET_KEY = process.env.SECRET_KEY;
+const bcrypt = require('bcryptjs');
 
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
+const { isNameValid } = require('../utils/files');
+const secrets = require('../../config/secrets');
+
+const SECRET_KEY = secrets.jwtSecret;
+
 
 
 exports.login = async (req, res) => {
@@ -39,8 +41,8 @@ exports.login = async (req, res) => {
         res.cookie('user_session', token, {
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7d 24h 60min 60s 1000s = 7d
             httpOnly: true,
-            secure: true,
-            sameSime: 'none',
+            secure: false,
+            sameSite: 'lax',
             path: '/'
         });
 

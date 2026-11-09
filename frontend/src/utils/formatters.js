@@ -1,9 +1,10 @@
 export function humanizeFileSize(size) {
+    if (size === undefined || size === null || isNaN(Number(size))) return '--';
     const units = [ 'B', 'KB', 'MB', 'GB', 'TB' ];
-    let newSize = size;
+    let newSize = Number(size);
     let unitIndex = 0;
 
-    while( newSize > 1024 && unitIndex < units.length-1 ) {
+    while( newSize >= 1024 && unitIndex < units.length-1 ) {
         newSize /= 1024;
         unitIndex++;
     }
@@ -13,10 +14,11 @@ export function humanizeFileSize(size) {
 export function formatDate(date) {
     if(!date) return '--';
 
-    const newDate = new Date(date)
+    const newDate = new Date(date);
+    if (isNaN(newDate.getTime())) return '--';
 
     const h = newDate.getHours().toString().padStart(2, '0');
-    const m = newDate.getMinutes().toString().padStart(2, '0')
+    const m = newDate.getMinutes().toString().padStart(2, '0');
     const s = newDate.getSeconds().toString().padStart(2, '0');
 
     const D = newDate.getDate().toString().padStart(2, '0');

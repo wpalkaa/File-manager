@@ -1,13 +1,13 @@
+'use client';
 
 import { useState } from 'react';
-
-import CreateUserDialog from './CreateUserDialog/CreateUserDialog'
+import { useTranslation } from '@/context/LanguageProvider';
+import CreateUserDialog from './CreateUserDialog/CreateUserDialog';
 import './UsersList.css';
 
 export default function CreateUserCard({ onCreate }) {
-
+    const { lang } = useTranslation();
     const [isOpened, setIsOpened] = useState(false);
-    console.log(isOpened)
 
     return (
         <>
@@ -17,12 +17,14 @@ export default function CreateUserCard({ onCreate }) {
                         <i className="fa-solid fa-plus"></i>
                     </div>
 
-                    <div className="user-name">Create</div>
+                    <div className="user-name">
+                        {lang?.settings?.users?.addUser || 'Add user'}
+                    </div>
 
                 </div>
             </div>
 
             {isOpened && <CreateUserDialog onClose={() => setIsOpened(false)} onCreate={onCreate} />}
         </>
-    )
+    );
 }

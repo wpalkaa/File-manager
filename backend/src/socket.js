@@ -3,6 +3,7 @@ module.exports = ( io ) => {
         console.log("Client successfully connected via WebSocket!");
         socket.send("Server: WebSocket connection established.");
 
+        const activeIntervals = new Set();
 
         socket.on('message', (message) => {
             console.log("Received message: %s", message);
@@ -38,11 +39,14 @@ module.exports = ( io ) => {
 
                 socket.emit('data update', { data : data } );
             }, 2000);
+
+            activeIntervals.add(intervalId);
         });
 
         socket.on('disconnect', () => {
             console.log("Client disconnected.");
-            // clearInterval(intervalId);
+            activeIntervals.forEach(intervalId => clearInterval(intervalId));
+            activeIntervals.clear();
         });
     });
-}
+};

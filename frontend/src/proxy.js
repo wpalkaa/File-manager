@@ -10,10 +10,15 @@ async function tokenValidation( token ) {
         const SECRET = process.env.SECRET_KEY;
         const encodedSECRET = new TextEncoder().encode( SECRET );
 
+        if (!SECRET) {
+            console.error("[ERROR] [Middleware]: SECRET_KEY is undefined.");
+        };
+
         await jwtVerify( token, encodedSECRET );
         return true;
     }
     catch( error ) {
+        console.error(`[ERROR] [Middleware]: Error while jwt verification: ${error.message}`)
         return false;
     }
 };
@@ -39,6 +44,7 @@ export default async function middleware( request ) {
         }
 
         // Invalid session, redirect to login and delete cookie
+        console.log("[Debug] [Middleware]: Token neiważny, usuwanie ciastka.")
         const response = NextResponse.redirect( new URL('/login', request.url) );
         response.cookies.delete( 'user_session' );
         return response;

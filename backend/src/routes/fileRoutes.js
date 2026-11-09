@@ -8,6 +8,10 @@ router.post('/getFileInfo', fileController.getFileInfo);
 router.post('/download', fileController.downloadFile);
 router.post('/create', fileController.createFile);
 
+router.get('/raw', fileController.getRawFile);
+router.get('/content', fileController.getFileContent);
+router.put('/content', fileController.saveFileContent);
+
 router.patch('/rename', fileController.renameFile);
 
 router.delete('/delete', fileController.deleteFile);

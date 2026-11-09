@@ -6,17 +6,25 @@ const fileController = require('../../src/controllers/fileController');
 const fileRoutes = require('../../src/routes/fileRoutes');
 const { isNameValid, getTargetPath } = require('../../src/utils/files');
 
-jest.mock('fs', () => ({
-  promises: {
-    access: jest.fn(),
-    readdir: jest.fn(),
-    stat: jest.fn(),
-    rename: jest.fn(),
-    rm: jest.fn(),
-    mkdir: jest.fn(),
-    writeFile: jest.fn(),
-  }
-}));
+jest.mock('fs', () => {
+  const { Readable } = require('stream');
+  return {
+    stat: jest.fn((p, cb) => {
+      if (typeof cb === 'function') cb(null, { isFile: () => true, size: 100 });
+    }),
+    createReadStream: jest.fn(() => Readable.from(['binary-data'])),
+    promises: {
+      access: jest.fn(),
+      readdir: jest.fn(),
+      stat: jest.fn(),
+      rename: jest.fn(),
+      rm: jest.fn(),
+      mkdir: jest.fn(),
+      writeFile: jest.fn(),
+      readFile: jest.fn(),
+    }
+  };
+});
 
 jest.mock('archiver', () => {
     return jest.fn().mockImplementation(() => ({
@@ -510,5 +518,99 @@ describe('/api/files', () => {
             });
         });
 
+    });
+
+    describe('GET /raw', () => {
+        afterEach(() => jest.clearAllMocks());
+
+        it('Everything ok', async () => {
+            getTargetPath.mockResolvedValue('/home/photo.png');
+            fs.promises.stat.mockResolvedValue({
+                isDirectory: () => false
+            });
+
+            const response = await request(app).get(`${API_URL}/raw?path=/photo.png`);
+            expect(response.statusCode).toBe(200);
+            expect(response.headers['content-type']).toContain('image/png');
+        });
+
+        it('Target is directory', async () => {
+            getTargetPath.mockResolvedValue('/home/folder');
+            fs.promises.stat.mockResolvedValue({
+                isDirectory: () => true
+            });
+
+            const response = await request(app).get(`${API_URL}/raw?path=/folder`);
+            expect(response.statusCode).toBe(400);
+            expect(response.body.message).toBe('notAFile');
+        });
+    });
+
+    describe('GET /content', () => {
+        afterEach(() => jest.clearAllMocks());
+
+        it('Everything ok', async () => {
+            getTargetPath.mockResolvedValue('/home/file.txt');
+            fs.promises.stat.mockResolvedValue({
+                isDirectory: () => false,
+                size: 20,
+                mtime: new Date()
+            });
+            fs.promises.readFile.mockResolvedValue('text content');
+
+            const response = await request(app).get(`${API_URL}/content?path=/file.txt`);
+            expect(response.statusCode).toBe(200);
+            expect(response.body.success).toBe(true);
+            expect(response.body.content).toBe('text content');
+        });
+
+        it('File too large', async () => {
+            getTargetPath.mockResolvedValue('/home/file.txt');
+            fs.promises.stat.mockResolvedValue({
+                isDirectory: () => false,
+                size: 6 * 1024 * 1024,
+                mtime: new Date()
+            });
+
+            const response = await request(app).get(`${API_URL}/content?path=/file.txt`);
+            expect(response.statusCode).toBe(400);
+            expect(response.body.message).toBe('fileTooLarge');
+        });
+    });
+
+    describe('PUT /content', () => {
+        afterEach(() => jest.clearAllMocks());
+
+        it('Everything ok', async () => {
+            getTargetPath.mockResolvedValue('/home/file.txt');
+            fs.promises.stat.mockResolvedValue({
+                isDirectory: () => false
+            });
+            fs.promises.writeFile.mockResolvedValue();
+            fs.promises.rename.mockResolvedValue();
+
+            const response = await request(app).put(`${API_URL}/content`).send({
+                path: '/file.txt',
+                content: 'new content'
+            });
+
+            expect(response.statusCode).toBe(200);
+            expect(response.body.success).toBe(true);
+        });
+
+        it('Target is directory', async () => {
+            getTargetPath.mockResolvedValue('/home/folder');
+            fs.promises.stat.mockResolvedValue({
+                isDirectory: () => true
+            });
+
+            const response = await request(app).put(`${API_URL}/content`).send({
+                path: '/folder',
+                content: 'new content'
+            });
+
+            expect(response.statusCode).toBe(400);
+            expect(response.body.message).toBe('notAFile');
+        });
     });
 });

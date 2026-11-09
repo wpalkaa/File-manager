@@ -1,8 +1,10 @@
 require('dotenv').config();
 const express = require('express');
-const https = require('https');
+const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+
+const redis = require('redis');
 
 const mongoose = require('mongoose');
 // const socket = require('./socket');
@@ -17,29 +19,26 @@ const usersRoutes = require('./routes/usersRoutes');
 const User = require('./models/User');
 
 
+const FORCE_EXIT_TIME = 20000 // 20 seconds
+
 // Initialize Express and HTTP server
 const app = express();
 
-const options = {
-    key: fs.readFileSync('./localhost-key.pem'),
-    cert: fs.readFileSync('./localhost.pem'),
-};
+const server = http.createServer(app);
 
-const server = https.createServer(options, app);
-// const io = new Server( server, {
-//     cors: {
-//         origin: 'https://localhost:3000', // Allowing requests from Nextjs server
-//         methods: ["GET", "POST"],
-//         credentials: true
-//     },
-//     allowEIO3: true
-// } );
+// Redis
+const redisClient = redis.createClient({ url: process.env.REDIS_URL });
+
+redisClient.on('error', (err) => console.log(`[ERROR]: Redis Client Error: ${err}`));
+redisClient.connect()
+    .then(() => console.log(`[INFO]: Connected to redis.`))
+    .catch((err) => console.error(`[ERROR]: Failed to connect to Redis: ${err}`));
 
 
 // Middleware
 app.use(express.json());
 app.use(cors({
-    origin: 'https://localhost:3000', // Allowing requests from Nextjs server
+    origin: ['http://localhost', 'http://localhost:3000'], // Allowing requests from Nextjs server
     methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true
 }))
@@ -51,6 +50,12 @@ app.use( '/api/auth', authRoutes );
 app.use( '/api/files', fileRoutes );
 app.use( '/api/users', usersRoutes)
 
+app.get('/api/health', (_req, res) => {
+    if (mongoose.connection.readyState === 1) {
+        return res.status(200).send("OK");
+    }
+    return res.status(503).send("Database not ready");
+});
 // // WebSocket
 // socket( io );
 
@@ -59,36 +64,88 @@ MQTTConnect();
 
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI)
-    .then( async () => {
-        console.log('[Info]: Connected to database.') 
-        
-        const adminExists = await User.findOne({ login: 'admin' });
-        const userExists = await User.findOne({ login: 'user' });
+async function connectToDatabase(retries = 15, delay = 3000) {
+    while (retries > 0) {
+        try {
+            await mongoose.connect(process.env.MONGODB_URI);
+            console.log('[Info]: Connected to database.');
 
-        if(!adminExists) {
-            console.log(`[Info]: Admin not found in database. Creating admin account.`)
-            const hashedPassword = await bcrypt.hash('admin', 10);
+            const adminExists = await User.findOne({ login: 'admin' });
+            const userExists = await User.findOne({ login: 'user' });
 
-            await User.create({
-                login: 'admin',
-                password: hashedPassword,
-                group: 'admin'
-            });
+            if (!adminExists) {
+                console.log(`[Info]: Admin not found in database. Creating admin account.`);
+                const hashedPassword = await bcrypt.hash('admin', 10);
+
+                await User.create({
+                    login: 'admin',
+                    password: hashedPassword,
+                    group: 'admin'
+                });
+            }
+            if (!userExists) {
+                console.log(`[Info]: User not found in database. Creating user account.`);
+                const hashedPassword = await bcrypt.hash('user', 10);
+
+                await User.create({
+                    login: 'user',
+                    password: hashedPassword,
+                    group: 'user'
+                });
+            }
+            return;
+        } catch (err) {
+            retries -= 1;
+            console.log(`[Error]: Couldn't connect to database (retrying in ${delay / 1000}s, retries left: ${retries}): \n${err}`);
+            if (retries === 0) {
+                console.error('[Error]: Exhausted database connection retries.');
+                break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, delay));
         }
-        if(!userExists) {
-            console.log(`[Info]: User not found in database. Creating user account.`)
-            const hashedPassword = await bcrypt.hash('user', 10);
+    }
+}
 
-            await User.create({
-                login: 'user',
-                password: hashedPassword,
-                group: 'user'
-            });
-        }})
-    .catch( (err) => console.log(`[Error]: Couldn't connect to database: \n${err}`) );
+connectToDatabase();
 
-const PORT = process.env.PORT;
+    
+// Graceful Shutdown
+function gracefulShutdown(signal) {
+    console.log(`[INFO]: Received ${signal} signal. Shuttind down the system...`);
+
+    const forceExitTimeout = setTimeout(() => {
+        console.error(`[ERROR]: Force shutdown. Couldn't close all services in time (${FORCE_EXIT_TIME})`);
+        process.exit(1);
+    }, 20000);
+
+    server.close(async () => {
+        
+        try {
+            if(redisClient.isOpen) {
+                await redisClient.quit();
+                console.log(`[INFO]: Redis has been closed.`);
+            }
+            
+            if( mongoose.connection.readyState !== 0 ) {
+                await mongoose.connection.close();
+                console.log(`[INFO]: MongoDB connection closed.`);
+            }
+
+            console.log(`[INFO]: All services closed. Exiting...`);
+            clearTimeout(forceExitTimeout);
+            process.exit(0);
+        } catch(error) {
+            console.error(`[ERROR]: Error during graceful shutdown: ${error}`);
+            clearTimeout(forceExitTimeout);
+            process.exit(1)
+        }
+    });
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+const PORT = process.env.BACKEND_PORT;
 
 server.listen(PORT, () => {
     console.log(`[Info]: HTTP server and WebSocket are listening on port ${PORT}`);

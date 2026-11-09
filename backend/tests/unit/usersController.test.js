@@ -239,4 +239,68 @@ describe('Users Controller', () => {
             });
         });
     })
+
+    describe('updateUser', () => {
+        afterEach(() => jest.clearAllMocks());
+
+        it('Everything ok', async () => {
+            req.params = { id: 'u1' };
+            req.body = { login: 'newlogin', password: 'newpassword', group: 'admin', avatar: 'avatar.png' };
+
+            const fakeUser = {
+                login: 'oldlogin',
+                group: 'user',
+                save: jest.fn().mockResolvedValue(),
+                toObject: jest.fn().mockReturnValue({ _id: 'u1', login: 'newlogin', group: 'admin', avatar: 'avatar.png' })
+            };
+            User.findById.mockResolvedValue(fakeUser);
+            User.findOne.mockResolvedValue(null);
+            isNameValid.mockReturnValue(true);
+            bcrypt.hash.mockResolvedValue('hashed_pw');
+
+            await usersController.updateUser(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(200);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: true,
+                data: expect.objectContaining({ login: 'newlogin' })
+            }));
+            expect(fakeUser.save).toHaveBeenCalled();
+        });
+
+        it('User not found', async () => {
+            req.params = { id: 'nonexistent' };
+            req.body = { login: 'test' };
+            User.findById.mockResolvedValue(null);
+
+            await usersController.updateUser(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(404);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: false,
+                message: 'userNotFound'
+            }));
+        });
+
+        it('Cannot demote last admin', async () => {
+            req.params = { id: 'admin1' };
+            req.body = { group: 'user' };
+
+            const fakeUser = {
+                login: 'admin',
+                group: 'admin',
+                save: jest.fn().mockResolvedValue()
+            };
+            User.findById.mockResolvedValue(fakeUser);
+            User.countDocuments.mockResolvedValue(1);
+
+            await usersController.updateUser(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+                success: false,
+                message: 'cannotDemoteLastAdmin'
+            }));
+        });
+    });
 });

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { useTranslation } from '@/context/LanguageProvider';
 
 import LoadingSpinner from '@/components/LoadingSpinner/LoadingSpinner';
 import './liveGraph.css';
@@ -28,6 +29,7 @@ const graphConfigs = {
 
 export default function LiveGraph({ chartId }) {
     
+    const { lang } = useTranslation();
     const clientRef = useRef();
 
     const config = graphConfigs[chartId] || graphConfigs['cpu'];
@@ -142,8 +144,8 @@ export default function LiveGraph({ chartId }) {
             <Line dataKey={"value"} isAnimationActive={false} dot={false}/>
             <CartesianGrid stroke="#797979ff" strokeDasharray="1 1" />
             <Tooltip 
-                labelFormatter={ (time) => [`Godzina: ${time}`]}
-                formatter={ (value) => [`Wykorzystanie: ${value.toFixed(2)}${config.unit}`]}
+                labelFormatter={ (time) => [`${lang?.resources?.graphs?.tooltip?.time || 'Time: '}${time}`]}
+                formatter={ (value) => [`${lang?.resources?.graphs?.tooltip?.usage || 'Usage: '}${value.toFixed(2)}${config.unit}`]}
                 contentStyle={{
                     backgroundColor: '#1e293b',
                     border: "1px solid #334155"
